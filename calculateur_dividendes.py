@@ -6,6 +6,7 @@ st.set_page_config(page_title="Calculateur de Dividendes", layout="wide")
 
 st.title("📈 Calculateur de Dividendes")
 
+
 # --- Entrées utilisateur ---
 col1, col2 = st.columns(2)
 
@@ -23,6 +24,7 @@ with col2:
     compte_imposable = st.radio("Compte imposable :", ["Oui", "Non"]) == "Oui"
     frequence_paiement = st.selectbox("Fréquence des paiements de dividendes :", ["Trimestrielle", "Annuelle", "Mensuelle"], index=0)
 
+
 # Fréquence en nombre de périodes par an
 frequence_map = {"Annuelle": 1, "Trimestrielle": 4, "Mensuelle": 12}
 nb_periodes = duree_investissement * frequence_map[frequence_paiement]
@@ -30,6 +32,8 @@ rendement_par_periode = rendement_annuel / frequence_map[frequence_paiement]
 augmentation_par_periode = (1 + augmentation_dividendes) ** (1 / frequence_map[frequence_paiement]) - 1
 appreciation_par_periode = (1 + appreciation_action) ** (1 / frequence_map[frequence_paiement]) - 1
 contribution_par_periode = contribution_annuelle / frequence_map[frequence_paiement]
+
+
 
 # --- Calculs ---
 valeurs_portefeuille = []
@@ -62,23 +66,40 @@ for periode in range(nb_periodes):
     revenus_dividendes.append(total_dividendes)
     rendement_sur_cout.append((total_dividendes / cout_total) * 100)
 
+    # Appliquer la croissance des dividendes
+    rendement_par_periode *= (1 + augmentation_par_periode)
+
+
 # --- Graphiques ---
-x_axis = list(range(1, nb_periodes + 1))
+
+# Axe X basé sur les années
+x_axis = list(range(1, duree_investissement + 1))
+
+# Réduction des listes : on prend 1 valeur par année (la dernière de chaque année)
+valeurs_portefeuille = [valeurs_portefeuille[i * frequence_map[frequence_paiement] - 1] for i in x_axis]
+revenus_dividendes = [revenus_dividendes[i * frequence_map[frequence_paiement] - 1] for i in x_axis]
+rendement_sur_cout = [rendement_sur_cout[i * frequence_map[frequence_paiement] - 1] for i in x_axis]
+formatter = plt.FuncFormatter(lambda x, _: f'{x:,.0f}')
 
 fig1, ax1 = plt.subplots()
 ax1.plot(x_axis, valeurs_portefeuille)
 ax1.set_title("Valeur du portefeuille")
 ax1.set_ylabel("$")
+ax1.get_yaxis().set_major_formatter(formatter)
 
 fig2, ax2 = plt.subplots()
 ax2.plot(x_axis, revenus_dividendes, color='green')
 ax2.set_title("Revenus de dividendes")
 ax2.set_ylabel("$")
+ax2.get_yaxis().set_major_formatter(formatter)
 
 fig3, ax3 = plt.subplots()
 ax3.plot(x_axis, rendement_sur_cout, color='gold')
 ax3.set_title("Rendement sur coût")
 ax3.set_ylabel("%")
+ax3.get_yaxis().set_major_formatter(formatter)
+
+
 
 # --- Affichage ---
 st.markdown("---")
